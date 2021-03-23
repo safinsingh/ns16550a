@@ -4,60 +4,62 @@
 
 uart_init:
 .cfi_startproc
-    addi    sp, sp, -16
-    sd      ra, 8(sp)
-    sd      fp, 0(sp)
-    addi    fp, sp, 16
+    # load top 20 bits of UART address into a0
+    # bottom 12 bits are implicitly 0
     lui     a0, 0x10000
-    addi    a1, a0, 3
-    addi    a2, zero, 3
-    sb      a2, 0(a1)  # set LCR (addr + 3) to 8 bits
-    addi    a1, a1, -1
-    addi    a2, a2, -2
-    sb      a2, (a1)   # enable FIFO (addr + 2)
-    addi    a1, a1, -1
-    sb      a2, (a1)   # enable recieve interrupts (addr + 1)
-    ld      fp, 0(sp)
-    ld      ra, 8(sp)
-    addi    sp, sp, 16
+    # set a0 to the UART address + 3
+    addi    a0, a0, 3
+    # set a2 to the value we want to write
+    addi    a1, zero, 3
+    # set line control register to 3 in order to
+    # set word length to 8 bits
+    sb      a1, (a0)
+    # set a0 to the UART address + 2
+    addi    a0, a0, -1
+    # set a1 to the value we want to write (1)
+    addi    a1, a1, -2
+    # enable FIFO
+    sb      a1, (a0)
+    # set a0 to the UART address + 1
+    addi    a0, a0, -1
+    # enable recieve interrupts by setting it to 1
+    sb      a1, (a0)
     ret
 .cfi_endproc
 
 uart_getc:
 .cfi_startproc
-    addi    sp, sp, -16
-    sd      ra, 8(sp)
-    sd      fp, 0(sp)
+    # load UART address into a0
     lui     a0, 0x10000
+    # add 5 to represent UART address + 5
     addi    a1, a0, 5
+    # read the line status register into a1
     lbu     a1, (a1)
+    # AND the value of a1 with one to check the DR bit
+    andi    a1, a1, 1
+    # jump to _uart_read if a1 is not 0
     bnez    a1, _uart_read
+    # assuming a0 is 0, zero out the return register
     mv      a0, zero
+    # jump to our return
     j       _uart_get_end
 
 _uart_read:
+    # load the character pointer to by the UART address into a0
     lbu     a0, (a0)
+    # jump to return
     j       _uart_get_end
 
 _uart_get_end:
-    addi    fp, sp, 16
-    ld      fp, 0(sp)
-    ld      ra, 8(sp)
-    addi    sp, sp, 16
     ret
 .cfi_endproc
 
 uart_putc:
 .cfi_startproc
-    addi    sp, sp, -16
-    sd      ra, 8(sp)
-    sd      fp, 0(sp)
-    addi    fp, sp, 16
+    # load UART address into a1
     lui     a1, 0x10000
+    # store byte in first argument at UART address
     sb      a0, (a1)
-    ld      fp, 0(sp)
-    ld      ra, 8(sp)
-    addi    sp, sp, 16
     ret
 .cfi_endproc
 
