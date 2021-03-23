@@ -8,7 +8,7 @@ build:
 	# -T: specify linkerscript
 	riscv64-unknown-elf-gcc -g -ffreestanding -O0 \
 		-Wl,--gc-sections -nostartfiles -nostdlib \
-		-nodefaultlibs -Wl,-T,riscv64-virt.ld \
+		-nodefaultlibs -Wl,-T,test/riscv64-virt.ld \
 		-mcmodel=medany test/crt0.s src/ns16550a.s \
 		test/main.c
 

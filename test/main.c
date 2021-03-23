@@ -13,9 +13,12 @@ int main() {
   uart_puts("Type something and it'll show up!");
 
   for (;;) {
+    // ideally, this should be handled by an interrupt.
+    // this library configures the UART so that it emits
+    // one when it's ready to read from.
     char c = uart_getc();
-    uart_putc(c);
+    if (c == 10 || c == 13) uart_putc('\n');
+    else
+      uart_putc(c);
   }
-
-  return 0;
 }
