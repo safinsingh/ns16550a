@@ -2,52 +2,48 @@
 .global uart_putc
 .global uart_getc
 
+.equ UART_ADDRESS,              0x10000000
+.equ LINE_STATUS_REGISTER,      0x5
+.equ LINE_CONTROL_REGISTER,     0x3
+.equ FIFO_CONTROL_REGISTER,     0x2
+.equ INTERRUPT_ENABLE_REGISTER, 0x1
+.equ LINE_STATUS_DATA_READY,    0x1
+
 uart_init:
 .cfi_startproc
-    # load top 20 bits of UART address into a0
-    # bottom 12 bits are implicitly 0
-    lui     a0, 0x10000
-    # set a0 to the UART address + 3
-    addi    a0, a0, 3
-    # set a2 to the value we want to write
-    addi    a1, zero, 3
-    # set line control register to 3 in order to
-    # set word length to 8 bits
-    sb      a1, (a0)
-    # set a0 to the UART address + 2
-    addi    a0, a0, -1
-    # set a1 to the value we want to write (1)
-    addi    a1, a1, -2
-    # enable FIFO
-    sb      a1, (a0)
-    # set a0 to the UART address + 1
-    addi    a0, a0, -1
-    # enable recieve interrupts by setting it to 1
-    sb      a1, (a0)
+    li  a0, UART_ADDRESS
+
+    # 0x3 -> 8 bit word length
+    li  a1, 0x3
+    sb  a1, LINE_CONTROL_REGISTER(a0)
+
+    # 0x1 -> enable FIFOs
+    li  a1, 0x1
+    sb  a1, LINE_CONTROL_REGISTER(a0)
+
+    # 0x1 -> enable reciever interrupts
+    sb  a1, INTERRUPT_ENABLE_REGISTER(a0)
+
     ret
 .cfi_endproc
 
 uart_getc:
 .cfi_startproc
-    # load UART address into a0
-    lui     a0, 0x10000
-    # add 5 to represent UART address + 5
-    addi    a1, a0, 5
-    # read the line status register into a1
-    lbu     a1, (a1)
-    # AND the value of a1 with one to check the DR bit
-    andi    a1, a1, 1
-    # jump to _uart_read if a1 is not 0
+    li      a0, UART_ADDRESS
+
+    lbu     a1, LINE_STATUS_REGISTER(a1)
+    andi    a1, a1, LINE_STATUS_DATA_READY
+
+    # jump to _uart_read if UART is ready to read from
     bnez    a1, _uart_read
-    # assuming a0 is 0, zero out the return register
+
+    # otherwise, return 0
     mv      a0, zero
-    # jump to our return
     j       _uart_get_end
 
 _uart_read:
-    # load the character pointer to by the UART address into a0
+    # load character at UART address into a0
     lbu     a0, (a0)
-    # jump to return
     j       _uart_get_end
 
 _uart_get_end:
@@ -56,10 +52,10 @@ _uart_get_end:
 
 uart_putc:
 .cfi_startproc
-    # load UART address into a1
-    lui     a1, 0x10000
-    # store byte in first argument at UART address
-    sb      a0, (a1)
+    li  a0, UART_ADDRESS
+
+    # store character at UART address in return register
+    sb  a0, (a1)
     ret
 .cfi_endproc
 

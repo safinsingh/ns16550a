@@ -1,6 +1,6 @@
 extern void uart_init(void);
 extern void uart_putc(unsigned char);
-extern unsigned char uart_getc();
+extern unsigned char uart_getc(void);
 
 void uart_puts(char* str) {
   while (*str) uart_putc(*str++);

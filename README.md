@@ -9,7 +9,7 @@ Example usage:
 ```c
 extern void uart_init(void);
 extern void uart_putc(unsigned char);
-extern unsigned char uart_getc();
+extern unsigned char uart_getc(void);
 
 void uart_puts(char* str) {
   while (*str) uart_putc(*str++);
@@ -29,7 +29,3 @@ int main() {
   return 0;
 }
 ```
-
-## Notes
-
-Assumes UART is located at `0x10000000`.
